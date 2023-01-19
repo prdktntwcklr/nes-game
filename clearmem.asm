@@ -26,11 +26,12 @@ RESET:
     ldx #$FF
     txs                      ; initialize stack pointer to $01FF
 
-    lda #0                   ; A = 0
-    ldx #$FF                 ; F = $FF
+    lda #$0                  ; A = 0
+    inx                      ; increment X from $FF to $0
+                             ; start from $0 which is not zeroed out below
 MemLoop:
     sta $0,x                 ; store A (zero) into memory position at $0+X
-    dex                      ; X--
+    dex                      ; X--, wrap around to $FF
     bne MemLoop              ; branch if X is not equal to zero
 
 NMI:
