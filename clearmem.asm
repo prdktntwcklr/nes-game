@@ -14,6 +14,9 @@
 .byte $00                    ; no PRG-RAM
 .byte $00,$00,$00,$00,$00    ; unused padding to complete 16 bytes of header
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; PRG-ROM code located at $8000
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 .segment "CODE"
 .org $8000
 
@@ -22,6 +25,13 @@ RESET:
     cld                      ; clear the decimal mode flag
     ldx #$FF
     txs                      ; initialize stack pointer to $01FF
+
+    lda #0                   ; A = 0
+    ldx #$FF                 ; F = $FF
+MemLoop:
+    sta $0,x                 ; store A (zero) into memory position at $0+X
+    dex                      ; X--
+    bne MemLoop              ; branch if X is not equal to zero
 
 NMI:
     rti                      ; return from interrupt
