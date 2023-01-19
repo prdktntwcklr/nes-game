@@ -1,10 +1,17 @@
+ASM = ca65
+LD = ld65
+PROJECT = clearmem
+CFG = nes.cfg
+
 .PHONY: all clean
 
-all: clearmem.o
-	ld65 -C nes.cfg $< -o clearmem.nes
-
-clearmem.o: clearmem.asm
-	 ca65 $< -o $@
+all: $(PROJECT).nes
 
 clean:
-	rm -f clearmem.o clearmem.nes
+	rm -f *.o *.nes
+
+$(PROJECT).nes: $(PROJECT).o
+	$(LD) -C $(CFG) $< -o $@
+
+$(PROJECT).o: $(PROJECT).asm
+	$(ASM) $< -o $@
