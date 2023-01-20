@@ -1,6 +1,6 @@
 ASM = ca65
 LD = ld65
-PROJECT = clearmem
+PROJECT = game
 CFG = nes.cfg
 
 SRC_DIR = src
@@ -16,6 +16,6 @@ clean:
 $(BUILD_DIR)/$(PROJECT).nes: $(BUILD_DIR)/$(PROJECT).o
 	$(LD) -C $(SRC_DIR)/$(CFG) $< -o $@
 
-$(BUILD_DIR)/$(PROJECT).o: $(SRC_DIR)/$(PROJECT).asm
+$(BUILD_DIR)/$(PROJECT).o: $(SRC_DIR)/main.asm
 	mkdir -p $(BUILD_DIR)
 	$(ASM) $< -o $@
