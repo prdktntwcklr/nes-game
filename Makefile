@@ -3,15 +3,19 @@ LD = ld65
 PROJECT = clearmem
 CFG = nes.cfg
 
+SRC_DIR = src
+BUILD_DIR = build
+
 .PHONY: all clean
 
-all: $(PROJECT).nes
+all: $(BUILD_DIR)/$(PROJECT).nes
 
 clean:
-	rm -f *.o *.nes
+	rm -rf $(BUILD_DIR)
 
-$(PROJECT).nes: $(PROJECT).o
-	$(LD) -C $(CFG) $< -o $@
+$(BUILD_DIR)/$(PROJECT).nes: $(BUILD_DIR)/$(PROJECT).o
+	$(LD) -C $(SRC_DIR)/$(CFG) $< -o $@
 
-$(PROJECT).o: $(PROJECT).asm
+$(BUILD_DIR)/$(PROJECT).o: $(SRC_DIR)/$(PROJECT).asm
+	mkdir -p $(BUILD_DIR)
 	$(ASM) $< -o $@
