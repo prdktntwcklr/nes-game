@@ -1,5 +1,17 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; constants for PPU registers mapped from addresses $2000 to $2007
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+PPU_CTRL   = $2000
+PPU_MASK   = $2001
+PPU_STATUS = $2002
+OAM_ADDR   = $2003
+OAM_DATA   = $2004
+PPU_SCROLL = $2005
+PPU_ADDR   = $2006
+PPU_DATA   = $2007
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; The iNES header (total 16 bytes) at $7FF0
+;; the iNES header (total 16 bytes) at $7FF0
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .segment "HEADER"
@@ -38,6 +50,16 @@ ClearRAM:
     inx                      ; X++
     bne ClearRAM             ; loops until X reaches 0 again (after overflow)
 
+Main:
+    ldx #$3F
+    stx PPU_ADDR             ; set hi-byte of PPU_ADDR to $3F
+    ldx #$00
+    stx PPU_ADDR             ; set lo-byte of PPU_ADDR to $00
+    lda #$2A
+    sta PPU_DATA             ; send $2A (lime-green color code) to PPU_DATA
+    lda #%00011110
+    sta PPU_MASK             ; set PPU_MASK bits to show background and sprites
+
 LoopForever:
     jmp LoopForever          ; force an infinite loop
 
@@ -54,7 +76,7 @@ IRQ:
     rti                      ; return from interrupt
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Vectors with the addresses of the handlers at $FFFA
+;; vectors with the addresses of the handlers at $FFFA
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 .segment "VECTORS"
 .word NMI                    ; address of the NMI handler
