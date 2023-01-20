@@ -1,6 +1,4 @@
 services:
   build-test:
-    image: ubuntu
-    volumes:
-    - .:/app
+    build: .
     command: bash -c "make clean && make"
