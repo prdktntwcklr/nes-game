@@ -1,4 +1,3 @@
-# container image
 FROM ubuntu:22.04
 
 # set working directory
@@ -14,5 +13,5 @@ RUN ln -snf /usr/share/zoneinfo/$CONTAINER_TIMEZONE /etc/localtime && \
 # update package information
 RUN apt-get update
 
-# install dependencies
-RUN apt-get install -y cc65 make
+# install required packages
+RUN xargs -a packages.txt apt-get install -y

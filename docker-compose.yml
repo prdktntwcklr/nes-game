@@ -1,4 +1,10 @@
 services:
-  build-test:
+  build-image:
+    image: nes-game
+    command: bash -c "echo build-image completed."
     build: .
+  build-test:
+    image: nes-game
     command: bash -c "make clean && make"
+    depends_on:
+    - build-image

@@ -1,4 +1,4 @@
-# NESGame
+# NES Game
 
 A game for the Nintendo Entertainment System (NES). Based on Pikuma's *NES
 Programming with 6502 Assembly* course.
@@ -7,14 +7,6 @@ Programming with 6502 Assembly* course.
 
 - CC65 2.18
 - GNU Make 4.2.1
-
-## Getting Started
-
-To compile the project, run the following command from the home directory:
-
-```bash
-make
-```
 
 ## Weblinks
 

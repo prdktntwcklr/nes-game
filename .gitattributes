@@ -1,0 +1,5 @@
+# set line endings to default
+* text=auto
+
+# declare files that will always have unix-style line endings on checkout
+*.txt text eol=lf
