@@ -1,7 +1,6 @@
 services:
   build-image:
     image: nes-game
-    command: bash -c "echo build-image completed."
     build: .
   build-nes:
     image: nes-game
