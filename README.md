@@ -1,10 +1,9 @@
 # NES Game
 
 A game for the Nintendo Entertainment System (NES). Based on Pikuma's *NES
-Programming with 6502 Assembly* course.
-
-The game is assembled and linked using ```ca65``` and ```ld65``` respectively,
-both of which are part of the [cc65](https://www.cc65.org/) project.
+Programming with 6502 Assembly* course. The game is assembled and linked using
+```ca65``` and ```ld65``` respectively, both of which are part of the
+[cc65](https://www.cc65.org/) project.
 
 ## Building the Project
 
@@ -13,9 +12,10 @@ easiest way to build the project is to simply run ```docker compose build```
 followed by ```docker compose run build-nes``` in the project directory.
 
 Otherwise, you will have to install all required packages manually
-(see [Toolchain](#toolchain) below) and run ```make```. The game can then be
-played by opening the ```build/game.nes``` file in a NES emulator such as
-[FCEUX](https://fceux.com/web/home.html).
+(see [Toolchain](#toolchain) below) and run ```make```.
+
+The game can then be played by opening the ```build/game.nes``` file in a NES
+emulator such as [FCEUX](https://fceux.com/web/home.html).
 
 ## Toolchain
 

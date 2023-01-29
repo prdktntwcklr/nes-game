@@ -8,6 +8,21 @@
 .segment "CODE"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Subroutine to load palette data
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+.proc LoadPalette
+    ldy #0
+LoopPalette:
+    lda PaletteData,y        ; lookup byte in ROM
+    sta PPU_DATA             ; set value to send to PPU_DATA
+    iny                      ; Y++
+    cpy #32                  ; is Y equal to 32?
+    bne LoopPalette          ; if not, keep looping
+
+    rts                      ; return from subroutine
+.endproc
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; RESET handler (called when NES resets or powers on)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 RESET:
@@ -20,13 +35,7 @@ Main:
     ldx #$00
     stx PPU_ADDR             ; set lo-byte of PPU_ADDR to $00
 
-    ldy #0
-LoopPalette:
-    lda PaletteData,y        ; lookup byte in ROM
-    sta PPU_DATA             ; set value to send to PPU_DATA
-    iny                      ; Y++
-    cpy #32                  ; is Y equal to 32?
-    bne LoopPalette          ; if not, keep looping
+    jsr LoadPalette          ; jump to subroutine LoadPalette
 
     lda #%00011110
     sta PPU_MASK             ; set PPU_MASK bits to show background and sprites
