@@ -14,12 +14,20 @@ RESET:
     INIT_NES                 ; macro to initialize the NES
 
 Main:
+    bit PPU_STATUS           ; read PPU_STATUS to reset PPU_ADDR latch
     ldx #$3F
     stx PPU_ADDR             ; set hi-byte of PPU_ADDR to $3F
     ldx #$00
     stx PPU_ADDR             ; set lo-byte of PPU_ADDR to $00
-    lda #$2A
-    sta PPU_DATA             ; send $2A (lime-green color code) to PPU_DATA
+
+    ldy #0
+LoopPalette:
+    lda PaletteData,y        ; lookup byte in ROM
+    sta PPU_DATA             ; set value to send to PPU_DATA
+    iny                      ; Y++
+    cpy #32                  ; is Y equal to 32?
+    bne LoopPalette          ; if not, keep looping
+
     lda #%00011110
     sta PPU_MASK             ; set PPU_MASK bits to show background and sprites
 
@@ -37,6 +45,13 @@ NMI:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 IRQ:
     rti                      ; return from interrupt
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Palette data for background and sprites
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+PaletteData:
+.byte $0F,$2A,$0C,$3A, $0F,$2A,$0C,$3A, $0F,$2A,$0C,$3A, $0F,$2A,$0C,$3A ; BG
+.byte $0F,$10,$00,$26, $0F,$10,$00,$26, $0F,$10,$00,$26, $0F,$10,$00,$26 ; SP
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Vectors with the addresses of the handlers at $FFFA
