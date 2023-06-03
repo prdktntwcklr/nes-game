@@ -1,15 +1,24 @@
-FROM ubuntu:22.04
+# Dockerfile adapted from gstolarz/docker-cc65
 
-# set working directory
-WORKDIR /app
+FROM alpine:3.13 AS build
 
-# copy packages.txt into image
-COPY packages.txt .
+RUN apk add --update --no-cache gcc make musl-dev unzip wget
 
-# set timezone
-RUN ln -snf /usr/share/zoneinfo/$CONTAINER_TIMEZONE /etc/localtime && \
-    echo $CONTAINER_TIMEZONE > /etc/timezone
+WORKDIR /usr/src
 
-# update package information and install required packages
-RUN apt-get update && \
-    xargs -a packages.txt apt-get install -y
+ARG CC65_VERSION=2.19
+
+RUN wget https://github.com/cc65/cc65/archive/V${CC65_VERSION}.zip -O cc65-${CC65_VERSION}.zip \
+  && unzip cc65-${CC65_VERSION}.zip \
+  && cd cc65-${CC65_VERSION} \
+  && PREFIX=/opt/cc65 make \
+  && PREFIX=/opt/cc65 make install \
+  && find /opt/cc65/bin -type f -exec strip {} \;
+
+FROM alpine:3.13
+
+RUN apk add --update --no-cache git make
+
+COPY --from=build /opt/cc65 /opt/cc65
+ENV PATH /opt/cc65/bin:$PATH
+WORKDIR /workdir

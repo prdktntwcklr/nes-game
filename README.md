@@ -8,11 +8,13 @@ Programming with 6502 Assembly* course. The game is assembled and linked using
 ## Building the Project
 
 If you have [Docker](https://www.docker.com/) installed on your machine, the
-easiest way to build the project is to simply run ```docker compose build```
-followed by ```docker compose run build-nes``` in the project directory.
-
-Otherwise, you will have to install all required packages manually
-(see [Toolchain](#toolchain) below) and run ```make```.
+easiest way to build the project is to open the workspace file in
+[Visual Studio Code](https://code.visualstudio.com/) with the
+[Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+extension installed. This will allow you to reopen the project in a development
+environment that has all the required packages installed. You can then simply
+build the project by running a build task through pressing
+```Ctrl + Shift + B```.
 
 The game can then be played by opening the ```build/game.nes``` file in a NES
 emulator such as [FCEUX](https://fceux.com/web/home.html).
