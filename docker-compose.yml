@@ -4,8 +4,8 @@ services:
     build: .
   build-nes:
     image: nes-game
-    command: bash -c "make clean && make"
+    command: sh -c "make clean && make"
     depends_on:
     - build-image
     volumes:
-    - ./:/app
+    - ./:/workdir
