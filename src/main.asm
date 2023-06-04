@@ -1,6 +1,7 @@
 .include "constants.inc"
 .include "header.inc"
 .include "reset.inc"
+.include "utils.inc"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; PRG-ROM code located at $8000
@@ -12,12 +13,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 .proc LoadPalette
     ldy #0                   ; Y = 0
-LoopPalette:
-    lda PaletteData,y        ; lookup byte in ROM
+:   lda PaletteData,y        ; lookup byte in ROM
     sta PPU_DATA             ; set value to send to PPU_DATA
     iny                      ; Y++
     cpy #32                  ; is Y equal to 32?
-    bne LoopPalette          ; if not, keep looping
+    bne :-                   ; if not, keep looping to previous unamed label
     rts                      ; return from subroutine
 .endproc
 
@@ -26,12 +26,24 @@ LoopPalette:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 .proc LoadBackground
     ldy #0
-LoopBackground:
-    lda BackgroundData,y     ; lookup byte in ROM
+:   lda BackgroundData,y     ; lookup byte in ROM
     sta PPU_DATA             ; set value to send to PPU_DATA
     iny                      ; Y++
     cpy #255                 ; is Y equal to 255?
-    bne LoopBackground       ; if not, keep looping
+    bne :-                   ; if not, keep looping to previous unamed label
+    rts                      ; return from subroutine
+.endproc
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Subroutine to load 16 bytes of attributes for the first nametable
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+.proc LoadAttributes
+    ldy #0
+:   lda AttributeData,y     ; lookup byte in ROM
+    sta PPU_DATA             ; set value to send to PPU_DATA
+    iny                      ; Y++
+    cpy #16                  ; is Y equal to 16?
+    bne :-                   ; if not, keep looping to previous unamed label
     rts                      ; return from subroutine
 .endproc
 
@@ -42,26 +54,22 @@ RESET:
     INIT_NES                 ; macro to initialize the NES
 
 Main:
-    bit PPU_STATUS           ; read PPU_STATUS to reset PPU_ADDR latch
-    ldx #$3F
-    stx PPU_ADDR             ; set hi-byte of PPU_ADDR to $3F
-    ldx #$00
-    stx PPU_ADDR             ; set lo-byte of PPU_ADDR to $00
-
+    PPU_SETADDR $3F00
     jsr LoadPalette          ; jump to subroutine LoadPalette
 
-    bit PPU_STATUS           ; read PPU_STATUS to reset PPU_ADDR latch
-    ldx #$20
-    stx PPU_ADDR             ; set hi-byte of PPU_ADDR to $20
-    ldx #$00
-    stx PPU_ADDR             ; set lo-byte of PPU_ADDR to $00    
-
+    PPU_SETADDR $2000
     jsr LoadBackground       ; jump to subroutine LoadBackground
+
+    PPU_SETADDR $23C0
+    jsr LoadAttributes       ; jump to subroutine LoadAttributes    
 
 EnablePPURendering:
     lda #%10010000           ; enable NMI interrupt and set background to use
                              ; the second pattern table at ($1000)
     sta PPU_CTRL
+    lda #0
+    sta PPU_SCROLL           ; disable scroll in X
+    sta PPU_SCROLL           ; disable scroll in Y
     lda #%00011110
     sta PPU_MASK             ; set PPU_MASK bits to show background and sprites
 
@@ -84,8 +92,8 @@ IRQ:
 ;; Palette data for background and sprites
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 PaletteData:
-.byte $0F,$2A,$0C,$3A, $0F,$2A,$0C,$3A, $0F,$2A,$0C,$3A, $0F,$2A,$0C,$3A ; BG
-.byte $0F,$10,$00,$26, $0F,$10,$00,$26, $0F,$10,$00,$26, $0F,$10,$00,$26 ; SP
+.byte $22,$29,$1A,$0F, $22,$36,$17,$0F, $22,$30,$21,$0F, $22,$27,$17,$0F ; Background palette
+.byte $22,$16,$27,$18, $22,$1A,$30,$27, $22,$16,$30,$27, $22,$0F,$36,$17 ; Sprite palette
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Background data that must be copied to the nametable
@@ -99,6 +107,13 @@ BackgroundData:
 .byte $47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47
 .byte $47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47,$47
 .byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Attribute data that is used for 4x4 sections of the background
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+AttributeData:
+.byte %00000000, %00000000, %10101010, %00000000, %11110000, %00000000, %00000000, %00000000
+.byte %11111111, %11111111, %11111111, %11111111, %11111111, %11111111, %11111111, %11111111
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; CHR-ROM data, included from an external .chr file
