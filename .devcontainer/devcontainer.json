@@ -8,15 +8,5 @@
     "containerEnv": {
         "WORKSPACE_DIR": "${containerWorkspaceFolder}",
         "PROMPT_COMMAND": "history -a"
-    },
-    "customizations": {
-        "vscode": {
-            "extensions": [
-                "ms-vscode.cpptools"
-            ],
-            "settings": {
-                "terminal.integrated.defaultProfile.linux": "bash"
-            }
-        }
     }
 }
