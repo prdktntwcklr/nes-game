@@ -39,7 +39,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 .proc LoadAttributes
     ldy #0
-:   lda AttributeData,y     ; lookup byte in ROM
+:   lda AttributeData,y      ; lookup byte in ROM
     sta PPU_DATA             ; set value to send to PPU_DATA
     iny                      ; Y++
     cpy #16                  ; is Y equal to 16?
