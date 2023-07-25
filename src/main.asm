@@ -63,6 +63,34 @@ IncreaseHiByte:
 .endproc
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Subroutine to load text in the nametable until it finds a 0-terminator
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+.proc LoadText
+    PPU_SETADDR $21CB        ; set position where text starts
+
+    ldy #0                   ; Y = 0
+Loop:
+    lda TextMessage,y        ; fetch character byte from ROM
+    beq EndLoop              ; if character is 0, end the loop
+
+    cmp #32                  ; compare loaded character to ASCII #32 (space)
+    bne DrawLetter           ; if not space, draw a letter
+DrawSpace:
+    lda #$24                 ; tile $24 is the empty tile
+    sta PPU_DATA             ; store data and advance PPU address
+    jmp NextChar             ; proceed to the next character
+DrawLetter:
+    sec                      ; set carry before subtracting
+    sbc #55                  ; map byte to char tile by subtracting 55
+    sta PPU_DATA             ; store data and advance PPU address
+NextChar:
+    iny                      ; Y++
+    jmp Loop                 ; continue looping since we are not done
+EndLoop:
+    rts                      ; Return from subroutine
+.endproc
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; RESET handler (called when NES resets or powers on)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 RESET:
@@ -75,6 +103,7 @@ RESET:
 Main:
     jsr LoadPalette          ; jump to subroutine LoadPalette
     jsr LoadBackground       ; jump to subroutine LoadBackground
+    jsr LoadText             ; draw the text message on the nametable
 
 EnablePPURendering:
     lda #%10010000           ; enable NMI interrupt and set background to use
@@ -116,12 +145,9 @@ PaletteData:
 .byte $22,$29,$1A,$0F, $22,$36,$17,$0F, $22,$30,$21,$0F, $22,$27,$17,$0F ; Background palette
 .byte $22,$16,$27,$18, $22,$1A,$30,$27, $22,$16,$30,$27, $22,$0F,$36,$17 ; Sprite palette
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Background data that must be copied to the nametable
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Background data with tile numbers that must be copied to the nametable
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 BackgroundData:
 .byte $24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24
 .byte $24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24,$24
@@ -161,11 +187,17 @@ AttributeData:
 .byte %00000000, %00000000, %00000000, %00000000, %00000000, %00000000, %00000000, %00000000
 .byte %00000000, %10101010, %10101010, %00000000, %00000000, %00000000, %10101010, %00000000
 .byte %00000000, %00000000, %00000000, %00000000, %11111111, %00000000, %00000000, %00000000
-.byte %00000000, %00000000, %00000000, %00000000, %00000000, %00000000, %00000000, %00000000
+.byte %00000000, %00000000, %10101010, %10101010, %10101010, %10101010, %00000000, %00000000
 .byte %11111111, %00000000, %00000000, %00001111, %00001111, %00000011, %00000000, %00000000
 .byte %00000000, %00000000, %00000000, %00000000, %00000000, %00000000, %00000000, %00000000
 .byte %11111111, %11111111, %11111111, %11111111, %11111111, %11111111, %11111111, %11111111
 .byte %11111111, %11111111, %11111111, %11111111, %11111111, %11111111, %11111111, %11111111
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Hardcoded ASCII message stored in ROM with 0-terminator
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+TextMessage:
+.byte "HELLO WORLD",$0
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; CHR-ROM data, included from an external .chr file
