@@ -3,6 +3,11 @@
 .include "reset.inc"
 .include "utils.inc"
 
+.segment "ZEROPAGE"
+Frame:   .res 1              ; reserve 1 byte to store the number of frames
+Clock60: .res 1              ; reserve 1 byte to store a counter that increments
+                             ; every second (every 60 frames)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; PRG-ROM code located at $8000
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -53,6 +58,10 @@
 RESET:
     INIT_NES                 ; macro to initialize the NES
 
+    lda #0
+    sta Frame                ; initialize frame variable to zero
+    sta Clock60              ; initialize Clock60 variable to zero
+
 Main:
     PPU_SETADDR $3F00
     jsr LoadPalette          ; jump to subroutine LoadPalette
@@ -80,6 +89,14 @@ LoopForever:
 ;; NMI interrupt handler
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 NMI:
+    inc Frame                ; increment frame variable
+    lda Frame                ; load frame into Accumulator
+    cmp #60                  ; check if frame has reached 60
+    bne Skip                 ; if not 60, bypass
+    inc Clock60              ; if 60, increment Clock60
+    lda #0
+    sta Frame                ; reset frame variable to zero
+Skip:
     rti                      ; return from interrupt
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
