@@ -91,6 +91,20 @@ EndLoop:
 .endproc
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Subroutine to load all 16 bytes into OAM-RAM starting at $0200
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+.proc LoadSprites
+    ldx #0
+LoopSprite:
+    lda SpriteData,x         ; We fetch bytes from the SpriteData lookup table
+    sta $0200,x              ; We store the bytes starting at OAM address $0200
+    inx                      ; X++
+    cpx #16
+    bne LoopSprite           ; Loop 16 times (4 hardware sprites, 4 bytes each)
+    rts
+.endproc
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; RESET handler (called when NES resets or powers on)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 RESET:
@@ -104,6 +118,7 @@ Main:
     jsr LoadPalette          ; jump to subroutine LoadPalette
     jsr LoadBackground       ; jump to subroutine LoadBackground
     jsr LoadText             ; draw the text message on the nametable
+    jsr LoadSprites          ; load all sprites into OAM-RAM
 
 EnablePPURendering:
     lda #%10010000           ; enable NMI interrupt and set background to use
@@ -123,6 +138,10 @@ LoopForever:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 NMI:
     inc Frame                ; increment frame variable
+
+    lda #$02                 ; Every frame, we copy spite data starting at $02**
+    sta $4014                ; The OAM DMA copy starts when we write to $4014
+
     lda Frame                ; load frame into Accumulator
     cmp #60                  ; check if frame has reached 60
     bne Skip                 ; if not 60, bypass
@@ -192,6 +211,28 @@ AttributeData:
 .byte %00000000, %00000000, %00000000, %00000000, %00000000, %00000000, %00000000, %00000000
 .byte %11111111, %11111111, %11111111, %11111111, %11111111, %11111111, %11111111, %11111111
 .byte %11111111, %11111111, %11111111, %11111111, %11111111, %11111111, %11111111, %11111111
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; This is the OAM sprite attribute data data we will use in our game.
+;; We have only one big metasprite that is composed of 4 hardware sprites.
+;; The OAM is organized in sets of 4 bytes per tile.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+SpriteData:
+;      Y   tile#   attribs     X
+.byte $10,  $3A,  %00000000,  $10 ; OAM sprite 1 at (x: 16, y: 16)
+.byte $10,  $37,  %00000000,  $18 ; OAM sprite 2 at (x: 24, y: 16)
+.byte $18,  $4F,  %00000000,  $10 ; OAM sprite 3 at (x: 16, y: 24)
+.byte $18,  $4F,  %01000000,  $18 ; OAM sprite 4 at (x: 24, y: 24) --> flip-horz
+
+; Sprite Attribute Byte:
+; ----------------------
+; 76543210
+; |||   ||
+; |||   ++- Color Palette of sprite. Choose which set of 4 from 16 colors to use
+; |||
+; ||+------ Priority (0: in front of background; 1: behind background)
+; |+------- Flip sprite horizontally
+; +-------- Flip sprite vertically
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Hardcoded ASCII message stored in ROM with 0-terminator
