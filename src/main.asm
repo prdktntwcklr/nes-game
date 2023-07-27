@@ -4,6 +4,9 @@
 .include "utils.inc"
 
 .segment "ZEROPAGE"
+Buttons: .res 1              ; reserve 1 byte to store button states
+XPos:    .res 1              ; Player X position
+YPos:    .res 1              ; Player Y position
 Frame:   .res 1              ; reserve 1 byte to store the number of frames
 Clock60: .res 1              ; reserve 1 byte to store a counter that increments
                              ; every second (every 60 frames)
@@ -14,6 +17,24 @@ BgPtr:   .res 2              ; reserve 2 bytes (16 bits) to store a pointer to
 ;; PRG-ROM code located at $8000
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 .segment "CODE"
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Subroutine to read controller state and store it inside "Buttons" in RAM
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+.proc ReadControllers
+    lda #1                   ; A = 1
+    sta Buttons              ; Buttons = 1
+    sta JOYPAD1              ; set latch to 1 to begin input mode
+    lsr                      ; A = 0
+    sta JOYPAD1              ; set latch to 0 to begin output mode
+LoopButtons:
+    lda JOYPAD1              ; read a bit from controller and inverts it
+                             ; also sends a signal to clock line to shift bits
+    lsr                      ; shift right to place 1 bit read into Carry
+    rol Buttons              ; rotate Carry bit into Buttons
+    bcc LoopButtons          ; loop until Carry is set (from initial 1)
+    rts
+.endproc
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Subroutine to load all 32 color palette values from ROM
@@ -110,9 +131,19 @@ LoopSprite:
 RESET:
     INIT_NES                 ; macro to initialize the NES
 
+InitVariables:
     lda #0
     sta Frame                ; initialize frame variable to zero
     sta Clock60              ; initialize Clock60 variable to zero
+    ldx #0
+    lda SpriteData,x         ; get Y coordinate from SpriteData
+    sta YPos
+
+    inx
+    inx
+    inx
+    lda SpriteData,x         ; get X coordinate from SpriteData
+    sta XPos                 ; XPos = 0
 
 Main:
     jsr LoadPalette          ; jump to subroutine LoadPalette
@@ -140,8 +171,50 @@ NMI:
     inc Frame                ; increment frame variable
 
     lda #$02                 ; Every frame, we copy spite data starting at $02**
-    sta $4014                ; The OAM DMA copy starts when we write to $4014
+    sta PPU_OAM_DMA          ; The OAM DMA copy starts when we write to $4014
 
+    jsr ReadControllers      ; read controller inputs
+
+CheckRightButton:
+    lda Buttons
+    and #BUTTON_RIGHT        ; #%00000001
+    beq CheckLeftButton
+    inc XPos                 ; X++
+CheckLeftButton:
+    lda Buttons
+    and #BUTTON_LEFT         ; #%00000010
+    beq CheckDownButton
+    dec XPos                 ; X--
+CheckDownButton:
+    lda Buttons
+    and #BUTTON_DOWN         ; #%00000100
+    beq CheckUpButton
+    inc YPos                 ; Y++
+CheckUpButton:
+    lda Buttons
+    and #BUTTON_UP           ; #%00001000
+    beq :+
+    dec YPos                 ; Y--
+:
+
+UpdateSpritePosition:
+    lda XPos
+    sta $0203                ; Set the 1st sprite X position to be XPos
+    sta $020B                ; Set the 3rd sprite X position to be XPos
+    clc
+    adc #8
+    sta $0207                ; Set the 2nd sprite X position to be XPos + 8
+    sta $020F                ; Set the 4th sprite X position to be XPos + 8
+
+    lda YPos
+    sta $0200                ; Set the 1st sprite Y position to be YPos
+    sta $0204                ; Set the 2nd sprite Y position to be YPos
+    clc
+    adc #8
+    sta $0208                ; Set the 3rd sprite Y position to be YPos + 8
+    sta $020C                ; Set the 4th sprite Y position to be YPos + 8
+
+UpdateSeconds:
     lda Frame                ; load frame into Accumulator
     cmp #60                  ; check if frame has reached 60
     bne Skip                 ; if not 60, bypass
