@@ -24,7 +24,11 @@ Wait1stVBlank:               ; wait for the first VBlank from the PPU
 ClearRAM:
     sta $0000,x              ; zero RAM addresses from $0000 to $00FF
     sta $0100,x              ; zero RAM addresses from $0100 to $01FF
+    
+    lda #$FF                 ; initialize OAM values with $FF to hide sprites
     sta $0200,x              ; zero RAM addresses from $0200 to $02FF
+
+    lda #$0                  ; A = 0
     sta $0300,x              ; zero RAM addresses from $0300 to $03FF
     sta $0400,x              ; zero RAM addresses from $0400 to $04FF
     sta $0500,x              ; zero RAM addresses from $0500 to $05FF
