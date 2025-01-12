@@ -8,11 +8,11 @@ on:
   
 jobs:
   build-nes:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 5
     steps:
       - name: checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: determine short GIT hash
         id:   vars
         run:  echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
@@ -21,7 +21,7 @@ jobs:
       - name: build nes file
         run:  docker compose run --rm build-nes
       - name: upload nes file
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.vars.outputs.sha_short }}-nes-file
           path: build/game.nes

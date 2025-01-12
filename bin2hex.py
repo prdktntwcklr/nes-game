@@ -1,4 +1,6 @@
-with open(background.nam', 'rb') as f:
+#!/usr/bin/env python3
+
+with open('background.nam', 'rb') as f:
 	i = 0
 	while True:
 		hexdata = f.read(1).hex()
@@ -6,5 +8,5 @@ with open(background.nam', 'rb') as f:
 			break
 		if i % 32 == 0:
 			print()
-		print('$' + hexdata.upper(), end = ',’)
+		print('$' + hexdata.upper(), end = ',')
 		i = i + 1
